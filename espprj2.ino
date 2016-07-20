@@ -1,13 +1,19 @@
 #include <SoftwareSerial.h>
 #include <ESP8266.h>
 
+String newCmd = "";
 String str_result ="Empty";
 bool bHw_status = false;
 uint32_t baud = 115200;
 bool bGmr = false;
+bool bWaitSSerial = false;
+bool bIncomingCmd = false;
 bool bSR = false;
-SoftwareSerial mySerial = SoftwareSerial(3,2);
-//ESP8266 wifi(Serial,115200);
+bool bOkSetup = false;
+bool bCwMode = false;
+bool bCfSR = false;
+String strBuffer = "";
+SoftwareSerial mySerial = SoftwareSerial(8,9);
 
 void setup() {
   pinMode(12,OUTPUT);
@@ -17,7 +23,7 @@ void setup() {
     ;
   }
   
-  mySerial.begin(4800);
+  mySerial.begin(9600);
   mySerial.println("Started");
   
 }
@@ -34,17 +40,57 @@ void loop() {
       Serial.println("AT+GMR");
       bGmr = true;  
     }
+    else if( !bCwMode){
+      bCwMode = true;
+      Serial.println("AT+CWMODE=1");
+    }
     else if( !bSR ){
       bSR = true;
       Serial.println("AT+CIPSTA=\"192.168.1.93\"");
     }
-    else{
-      mySerial.println("Done");
-      delay(10000);
+    else if( !bCfSR ){
+      bCfSR = true;
+      Serial.println("AT+CIFSR");
     }
-    
-    delay(500);
-  }  
+    else if (!bOkSetup) {
+      mySerial.println("Done");
+      bOkSetup = true;
+    }
+
+    if( strBuffer != ""){
+      mySerial.print(strBuffer);
+      strBuffer = "";
+    }
+      
+    delay(50);  
+  }
+
+  if( mySerial.available()){
+
+    char sstmp = mySerial.read();
+    if( !bWaitSSerial ){
+      if( sstmp == '@' )
+        bWaitSSerial = true;
+    }
+    else{
+      newCmd += sstmp;
+      if( sstmp == '\n')
+      {
+        bWaitSSerial = false;
+        bIncomingCmd = true;
+      }
+      else if( sstmp == '|'){
+        Serial.println();
+      }
+    }
+
+    if(bIncomingCmd == true){
+
+      Serial.print(newCmd);
+      newCmd = "";
+      bIncomingCmd = false;
+    }
+  }
 }
 
 void validate_result(){
@@ -55,6 +101,12 @@ void validate_result(){
 
 void serialEvent(){
   char res = Serial.read();
-  mySerial.print(res);
+  //mySerial.print(res);
+  strBuffer += res;
+  //if( res == '\n'){
+    //mySerial.print(strBuffer);
+    //strBuffer = "";
+  //}
+    
 }
 
