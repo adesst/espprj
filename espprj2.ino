@@ -18,7 +18,7 @@ SoftwareSerial mySerial = SoftwareSerial(8,9);
 void setup() {
   pinMode(12,OUTPUT);
 
-  Serial.begin(115200);
+  Serial.begin(9600);
   while(!Serial){
     ;
   }
@@ -56,13 +56,6 @@ void loop() {
       mySerial.println("Done");
       bOkSetup = true;
     }
-
-    if( strBuffer != ""){
-      mySerial.print(strBuffer);
-      strBuffer = "";
-    }
-      
-    delay(50);  
   }
 
   if( mySerial.available()){
@@ -101,12 +94,12 @@ void validate_result(){
 
 void serialEvent(){
   char res = Serial.read();
-  //mySerial.print(res);
-  strBuffer += res;
+  mySerial.print(res);
+  //strBuffer += res;
   //if( res == '\n'){
     //mySerial.print(strBuffer);
     //strBuffer = "";
   //}
-    
 }
+
 
